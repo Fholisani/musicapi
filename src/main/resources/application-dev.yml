@@ -27,7 +27,7 @@ spring:
     table: schema_version
     validate-on-migrate: true
     clean-disabled: true
-    enabled: true
+    enabled: false
     baseline-on-migrate: true
 
 file:
