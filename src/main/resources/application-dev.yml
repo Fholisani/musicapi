@@ -1,0 +1,38 @@
+server:
+  port: 8089
+  servlet:
+    context-path: /music
+spring:
+  application:
+    name: musicapi
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/musicapi?autoreconnect=true&useSSL=false
+    username: root
+    password: password
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+    hibernate:
+      ddl-auto: update
+  flyway:
+    target: 202102.1.1
+    baseline-version: 202102.1.1
+    user: root
+    password: password
+    schemas: musicapi
+    url: jdbc:mysql://127.0.0.1:3306/musicapi
+    sql-migration-prefix: V
+    baseline-description: Initial_DB_Baseline_Local
+    table: schema_version
+    validate-on-migrate: true
+    clean-disabled: true
+    enabled: true
+    baseline-on-migrate: true
+
+file:
+  upload-dir: /opt/uploads
+logging:
+  level:
+    org:
+      flywaydb: debug
