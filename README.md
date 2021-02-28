@@ -1,2 +1,2 @@
 # musicapi
-upload, download and search music content -
+upload, download and search music content - _info_ 1
