@@ -37,7 +37,7 @@ public class MainContentController {
     private static final Logger LOG = LoggerFactory.getLogger(MainContentController.class);
     @Autowired
     ContentFileService contentFileService;
-    final static ApiSubError apiSubError = new ApiSubError();
+    //final static ApiSubError apiSubError = new ApiSubError();
     @PostMapping(path = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ContentResponse>
     uploadFile(@ApiParam(value = "Artist Profile Image") @Valid @RequestPart(value = "profileImage", required = false) MultipartFile profileContent,
@@ -49,13 +49,13 @@ public class MainContentController {
                @ApiParam(value = "Release date") @Valid @RequestPart(value = "releaseDate", required = false) String releaseDate) throws Exception {
 
         List<ApiSubError> errorInput = new ArrayList<>();
-        errorInput = validMultiPartContents(errorInput, profileContent, "profileContent", "Provide Artist Profile Image");
-        errorInput = validMultiPartContents(errorInput, fileContent, "fileContent", "Provide Music File");
+        errorInput = validMultiPartContentsImages(errorInput, profileContent, "profileContent", "Provide Artist Profile Image");
+        errorInput = validMultiPartContentsAudio(errorInput, fileContent, "fileContent", "Provide Music File");
         errorInput = validMultiPartContents(errorInput, songName, "songName", "Provide Music song name");
         errorInput = validMultiPartContents(errorInput, producerName, "producerName", "Provide Names of the producers");
-        errorInput = validMultiPartContents(errorInput, artwork, "artwork", "Provide Music artwork - images directly related to an artist or an album");
+        errorInput = validMultiPartContentsImages(errorInput, artwork, "artwork", "Provide Music artwork - images directly related to an artist or an album");
         errorInput = validMultiPartContents(errorInput, releaseDate, "releaseDate", "Provide Release date");
-        errorInput = validMultiPartContents(errorInput, artistsNames, "artistsNames", "Provide Artist Profile Image");
+        errorInput = validMultiPartContents(errorInput, artistsNames, "artistsNames", "Provide Artist name");
 
         if (errorInput.isEmpty()) {
             LOG.info("==================Received File================");
@@ -104,22 +104,27 @@ public class MainContentController {
         errorInput = validMultiPartContents(errorInput, songName, "songName", "Provide Music song name");
         errorInput = validMultiPartContents(errorInput, producerName, "producerName", "Provide Names of the producers");
         errorInput = validMultiPartContents(errorInput, releaseDate, "releaseDate", "Provide Release date");
-        errorInput = validMultiPartContents(errorInput, artistsNames, "artistsNames", "Provide Artist Profile Image");
+        errorInput = validMultiPartContents(errorInput, artistsNames, "artistsNames", "Provide Artist name");
+        errorInput = validMultiPartContentsAudioUpdate(errorInput, fileContent, "fileContent", "File type must be audio mp3");
+        errorInput = validMultiPartContentsImagesUpdate(errorInput, profileContent, "profileContent", "Image type must either be jpeg, png or gif");
+        errorInput = validMultiPartContentsImagesUpdate(errorInput, artwork, "artwork", "Image type must either be jpeg, png or gif");
+
+
 
         if (errorInput.isEmpty()) {
             LOG.info("==================Update File================ " + contentId);
             Content content = new Content();
             content.setId(Integer.parseInt(String.valueOf(contentDataContentResponse.getContentId())));
             content.setArtistsNames(artistsNames);
-            content.setArtwork(artwork.getResource());
-            content.setArtworkBytes(artwork.getBytes());
+            content.setArtwork(artwork == null ?  null : artwork.getResource());
+            content.setArtworkBytes(artwork == null ?  null :artwork.getBytes());
             content.setSongName(songName);
             content.setProducerName(producerName);
             content.setReleaseDate(releaseDate);
-            content.setFileContent(fileContent.getResource());
-            content.setFileContentBytes(fileContent.getBytes());
-            content.setProfileImage(profileContent.getResource());
-            content.setProfileImageBytes(profileContent.getBytes());
+            content.setFileContent(fileContent == null ? null : fileContent.getResource());
+            content.setFileContentBytes(fileContent == null ? null :fileContent.getBytes());
+            content.setProfileImage(profileContent == null ? null :profileContent.getResource());
+            content.setProfileImageBytes(profileContent == null ? null :profileContent.getBytes());
             content.setLocationContent(contentDataContentResponse.getLocationContent());
             content.setLocationProfile(contentDataContentResponse.getLocationProfile());
             content.setLocationArtwork(contentDataContentResponse.getLocationArtwork());
@@ -139,15 +144,17 @@ public class MainContentController {
 
 
     }
-    @DeleteMapping("/contents/{contentId}")
-    public void deleteContents(@PathVariable long contentId) throws Exception {
+    @DeleteMapping(value = "/contents/{contentId}", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<String> deleteContents(@PathVariable long contentId) throws Exception {
         LOG.info("deleteContents : " + contentId);
         contentFileService.deleteById(contentId);
+        return new ResponseEntity<>("Successfully deleted content : " + contentId, HttpStatus.OK);
 
     }
 
     public static List<ApiSubError> validMultiPartContents(List<ApiSubError> errorInput, Object fieldName,
                                                            String field, String message) {
+        ApiSubError apiSubError = new ApiSubError();
         if (fieldName == null) {
             apiSubError.setField(field);
             apiSubError.setMessage(message);
@@ -156,5 +163,116 @@ public class MainContentController {
         return errorInput;
     }
 
+    public static List<ApiSubError> validMultiPartContentsImages(List<ApiSubError> errorInput, Object fieldName,
+                                                           String field, String message) {
+        if (fieldName == null) {
+            ApiSubError apiSubError = new ApiSubError();
+            apiSubError.setField(field);
+            apiSubError.setMessage(message);
+            errorInput.add(apiSubError);
+        }else{
+            if(fieldName instanceof  MultipartFile){
+                String type = ((MultipartFile) fieldName).getContentType();
+                switch (type){
+                    case "image/png":
+                        LOG.info("upload type image/png ");
+                        break;
+                    case "image/jpeg":
+                        LOG.info("upload type image/jpeg ");
+                        break;
+                    case "image/gif":
+                        LOG.info("upload type image/gif ");
+                        break;
+                    default:
+                        ApiSubError apiSubError = new ApiSubError();
+                        apiSubError.setField(field);
+                        apiSubError.setMessage("Image type must either be jpeg, png or gif");
+                        errorInput.add(apiSubError);
+                }
+            }
+        }
+        return errorInput;
+    }
+
+    public static List<ApiSubError> validMultiPartContentsAudio(List<ApiSubError> errorInput, Object fieldName,
+                                                             String field, String message) {
+
+        if (fieldName == null) {
+            ApiSubError apiSubError = new ApiSubError();
+            apiSubError.setField(field);
+            apiSubError.setMessage(message);
+            errorInput.add(apiSubError);
+        }else{
+            if(fieldName instanceof  MultipartFile){
+                String type = ((MultipartFile) fieldName).getContentType();
+                switch (type){
+                    case "audio/mpeg":
+                        LOG.info("upload type audio mp3");
+                        break;
+                    case "audio/mp3":
+                        LOG.info("upload type audio mp3");
+                        break;
+                    default:
+                        ApiSubError apiSubError = new ApiSubError();
+                        apiSubError.setField(field);
+                        apiSubError.setMessage("File type must be audio mp3");
+                        errorInput.add(apiSubError);
+                }
+            }
+        }
+        return errorInput;
+    }
+
+
+
+    public static List<ApiSubError> validMultiPartContentsAudioUpdate(List<ApiSubError> errorInput, Object fieldName,
+                                                                String field, String message) {
+        if (fieldName != null) {
+            if(fieldName instanceof  MultipartFile){
+                String type = ((MultipartFile) fieldName).getContentType();
+                switch (type){
+                    case "audio/mpeg":
+                        LOG.info("upload type audio mp3");
+                        break;
+                    case "audio/mp3":
+                        LOG.info("upload type audio mp3");
+                        break;
+                    default:
+                        ApiSubError apiSubError = new ApiSubError();
+                        apiSubError.setField(field);
+                        apiSubError.setMessage(message);
+                        errorInput.add(apiSubError);
+                }
+            }
+        }
+        return errorInput;
+    }
+
+
+    public static List<ApiSubError> validMultiPartContentsImagesUpdate(List<ApiSubError> errorInput, Object fieldName,
+                                                                 String field, String message) {
+        if (fieldName != null) {
+            if(fieldName instanceof  MultipartFile){
+                String type = ((MultipartFile) fieldName).getContentType();
+                switch (type){
+                    case "image/png":
+                        LOG.info("upload type image/png ");
+                        break;
+                    case "image/jpeg":
+                        LOG.info("upload type image/jpeg ");
+                        break;
+                    case "image/gif":
+                        LOG.info("upload type image/gif ");
+                        break;
+                    default:
+                        ApiSubError apiSubError = new ApiSubError();
+                        apiSubError.setField(field);
+                        apiSubError.setMessage(message);
+                        errorInput.add(apiSubError);
+                }
+            }
+        }
+        return errorInput;
+    }
 
 }

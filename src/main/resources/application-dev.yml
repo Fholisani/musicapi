@@ -3,6 +3,11 @@ server:
   servlet:
     context-path: /music
 spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-request-size: 20MB
+      max-file-size: 20MB
   application:
     name: musicapi
 #  datasource:

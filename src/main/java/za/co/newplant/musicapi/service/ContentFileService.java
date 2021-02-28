@@ -116,7 +116,8 @@ public class ContentFileService implements IContentFileService {
             contentData.setReleaseDate(LocalDateTime.now());
             contentData.setSongName(content.getSongName());
             contentData.setStatus(RuleProcessor.statusRule(content));
-            contentData.setType(MusicUtility.getExtensionByStringHandling(content.getFileContent().getFilename()));
+            contentData.setType(MusicUtility.getExtensionByStringHandling( content.getFileContent() == null ?
+                    content.getLocationContent() : content.getFileContent().getFilename()));
             contentData.setLocation(locationFileContent);
             contentData.setLocationProfile(locationProfile);
             contentData.setLocationArtwork(locationArtWork);
